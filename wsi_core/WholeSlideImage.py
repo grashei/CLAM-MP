@@ -40,41 +40,41 @@ class WholeSlideImage(object):
     def getOpenSlide(self):
         return self.wsi
 
-    def initXML(self, xml_path):
-        def _createContour(coord_list):
-            return np.array([[[int(float(coord.attributes['X'].value)), 
-                               int(float(coord.attributes['Y'].value))]] for coord in coord_list], dtype = 'int32')
+    # def initXML(self, xml_path):
+    #     def _createContour(coord_list):
+    #         return np.array([[[int(float(coord.attributes['X'].value)),
+    #                            int(float(coord.attributes['Y'].value))]] for coord in coord_list], dtype = 'int32')
+    #
+    #     xmldoc = minidom.parse(xml_path)
+    #     annotations = [anno.getElementsByTagName('Coordinate') for anno in xmldoc.getElementsByTagName('Annotation')]
+    #     self.contours_tumor  = [_createContour(coord_list) for coord_list in annotations]
+    #     self.contours_tumor = sorted(self.contours_tumor, key=cv2.contourArea, reverse=True)
 
-        xmldoc = minidom.parse(xml_path)
-        annotations = [anno.getElementsByTagName('Coordinate') for anno in xmldoc.getElementsByTagName('Annotation')]
-        self.contours_tumor  = [_createContour(coord_list) for coord_list in annotations]
-        self.contours_tumor = sorted(self.contours_tumor, key=cv2.contourArea, reverse=True)
-
-    def initTxt(self,annot_path):
-        def _create_contours_from_dict(annot):
-            all_cnts = []
-            for idx, annot_group in enumerate(annot):
-                contour_group = annot_group['coordinates']
-                if annot_group['type'] == 'Polygon':
-                    for idx, contour in enumerate(contour_group):
-                        contour = np.array(contour).astype(np.int32).reshape(-1,1,2)
-                        all_cnts.append(contour) 
-
-                else:
-                    for idx, sgmt_group in enumerate(contour_group):
-                        contour = []
-                        for sgmt in sgmt_group:
-                            contour.extend(sgmt)
-                        contour = np.array(contour).astype(np.int32).reshape(-1,1,2)    
-                        all_cnts.append(contour) 
-
-            return all_cnts
-        
-        with open(annot_path, "r") as f:
-            annot = f.read()
-            annot = eval(annot)
-        self.contours_tumor  = _create_contours_from_dict(annot)
-        self.contours_tumor = sorted(self.contours_tumor, key=cv2.contourArea, reverse=True)
+    # def initTxt(self,annot_path):
+    #     def _create_contours_from_dict(annot):
+    #         all_cnts = []
+    #         for idx, annot_group in enumerate(annot):
+    #             contour_group = annot_group['coordinates']
+    #             if annot_group['type'] == 'Polygon':
+    #                 for idx, contour in enumerate(contour_group):
+    #                     contour = np.array(contour).astype(np.int32).reshape(-1,1,2)
+    #                     all_cnts.append(contour)
+    #
+    #             else:
+    #                 for idx, sgmt_group in enumerate(contour_group):
+    #                     contour = []
+    #                     for sgmt in sgmt_group:
+    #                         contour.extend(sgmt)
+    #                     contour = np.array(contour).astype(np.int32).reshape(-1,1,2)
+    #                     all_cnts.append(contour)
+    #
+    #         return all_cnts
+    #
+    #     with open(annot_path, "r") as f:
+    #         annot = f.read()
+    #         annot = eval(annot)
+    #     self.contours_tumor  = _create_contours_from_dict(annot)
+    #     self.contours_tumor = sorted(self.contours_tumor, key=cv2.contourArea, reverse=True)
 
     def initSegmentation(self, mask_file):
         # load segmentation results from pickle file
@@ -243,7 +243,7 @@ class WholeSlideImage(object):
         contours = self.contours_tissue
         contour_holes = self.holes_tissue
 
-        print("Creating patches for: ", self.name, "...",)
+        # print("Creating patches for: ", self.name, "...",)
         elapsed = time.time()
         for idx, cont in enumerate(contours):
             patch_gen = self._getPatchGenerator(cont, idx, patch_level, save_path, patch_size, step_size, **kwargs)
@@ -268,16 +268,16 @@ class WholeSlideImage(object):
     def _getPatchGenerator(self, cont, cont_idx, patch_level, save_path, patch_size=256, step_size=256, custom_downsample=1,
         white_black=True, white_thresh=15, black_thresh=50, contour_fn='four_pt', use_padding=True):
         start_x, start_y, w, h = cv2.boundingRect(cont) if cont is not None else (0, 0, self.level_dim[patch_level][0], self.level_dim[patch_level][1])
-        print("Bounding Box:", start_x, start_y, w, h)
-        print("Contour Area:", cv2.contourArea(cont))
+        # print("Bounding Box:", start_x, start_y, w, h)
+        # print("Contour Area:", cv2.contourArea(cont))
         
         if custom_downsample > 1:
             assert custom_downsample == 2 
             target_patch_size = patch_size
             patch_size = target_patch_size * 2
             step_size = step_size * 2
-            print("Custom Downsample: {}, Patching at {} x {}, But Final Patch Size is {} x {}".format(custom_downsample, patch_size, patch_size, 
-                target_patch_size, target_patch_size))
+            # print("Custom Downsample: {}, Patching at {} x {}, But Final Patch Size is {} x {}".format(custom_downsample, patch_size, patch_size,
+            #     target_patch_size, target_patch_size))
 
         patch_downsample = (int(self.level_downsamples[patch_level][0]), int(self.level_downsamples[patch_level][1]))
         ref_patch_size = (patch_size*patch_downsample[0], patch_size*patch_downsample[1])
@@ -331,7 +331,7 @@ class WholeSlideImage(object):
                 yield patch_info
 
         
-        print("patches extracted: {}".format(count))
+        # print("patches extracted: {}".format(count))
 
     @staticmethod
     def isInHoles(holes, pt, patch_size):
@@ -370,15 +370,16 @@ class WholeSlideImage(object):
 
     def process_contours(self, save_path, patch_level=0, patch_size=256, step_size=256, **kwargs):
         save_path_hdf5 = os.path.join(save_path, str(self.name) + '.h5')
-        print("Creating patches for: ", self.name, "...",)
+        # print("Creating patches for: ", self.name, "...",)
         elapsed = time.time()
         n_contours = len(self.contours_tissue)
-        print("Total number of contours to process: ", n_contours)
+        # print("Total number of contours to process: ", n_contours)
         fp_chunk_size = math.ceil(n_contours * 0.05)
         init = True
         for idx, cont in enumerate(self.contours_tissue):
             if (idx + 1) % fp_chunk_size == fp_chunk_size:
-                print('Processing contour {}/{}'.format(idx, n_contours))
+                pass
+                # print('Processing contour {}/{}'.format(idx, n_contours))
             
             asset_dict, attr_dict = self.process_contour(cont, self.holes_tissue[idx], patch_level, save_path, patch_size, step_size, **kwargs)
             if len(asset_dict) > 0:
@@ -406,8 +407,8 @@ class WholeSlideImage(object):
             stop_y = min(start_y+h, img_h-ref_patch_size[1]+1)
             stop_x = min(start_x+w, img_w-ref_patch_size[0]+1)
         
-        print("Bounding Box:", start_x, start_y, w, h)
-        print("Contour Area:", cv2.contourArea(cont))
+        # print("Bounding Box:", start_x, start_y, w, h)
+        # print("Contour Area:", cv2.contourArea(cont))
 
         if bot_right is not None:
             stop_y = min(bot_right[1], stop_y)
@@ -419,10 +420,11 @@ class WholeSlideImage(object):
         if bot_right is not None or top_left is not None:
             w, h = stop_x - start_x, stop_y - start_y
             if w <= 0 or h <= 0:
-                print("Contour is not in specified ROI, skip")
+                # print("Contour is not in specified ROI, skip")
                 return {}, {}
             else:
-                print("Adjusted Bounding Box:", start_x, start_y, w, h)
+                pass
+                # print("Adjusted Bounding Box:", start_x, start_y, w, h)
     
         if isinstance(contour_fn, str):
             if contour_fn == 'four_pt':
@@ -448,17 +450,23 @@ class WholeSlideImage(object):
         x_coords, y_coords = np.meshgrid(x_range, y_range, indexing='ij')
         coord_candidates = np.array([x_coords.flatten(), y_coords.flatten()]).transpose()
 
-        num_workers = mp.cpu_count()
-        if num_workers > 4:
-            num_workers = 4
-        pool = mp.Pool(num_workers)
+        # num_workers = mp.cpu_count()
+        # if num_workers > 4:
+        #     num_workers = 4
+        # pool = mp.Pool(num_workers)
+        #
+        # iterable = [(coord, contour_holes, ref_patch_size[0], cont_check_fn) for coord in coord_candidates]
+        # results = pool.starmap(WholeSlideImage.process_coord_candidate, iterable)
+        # pool.close()
+        # results = np.array([result for result in results if result is not None])
 
-        iterable = [(coord, contour_holes, ref_patch_size[0], cont_check_fn) for coord in coord_candidates]
-        results = pool.starmap(WholeSlideImage.process_coord_candidate, iterable)
-        pool.close()
+        results = [WholeSlideImage.process_coord_candidate(coord, contour_holes, ref_patch_size[0], cont_check_fn)
+             for coord in coord_candidates]
+
         results = np.array([result for result in results if result is not None])
+
         
-        print('Extracted {} coordinates'.format(len(results)))
+        # print('Extracted {} coordinates'.format(len(results)))
 
         if len(results)>0:
             asset_dict = {'coords' :          results}
