@@ -420,11 +420,11 @@ class WholeSlideImage(object):
         if bot_right is not None or top_left is not None:
             w, h = stop_x - start_x, stop_y - start_y
             if w <= 0 or h <= 0:
-                # print("Contour is not in specified ROI, skip")
+                print("Contour is not in specified ROI, skip")
                 return {}, {}
             else:
                 pass
-                # print("Adjusted Bounding Box:", start_x, start_y, w, h)
+                print("Adjusted Bounding Box:", start_x, start_y, w, h)
     
         if isinstance(contour_fn, str):
             if contour_fn == 'four_pt':

@@ -49,7 +49,7 @@ def patching(WSI_object, **kwargs):
 	return file_path, patch_time_elapsed
 
 
-def seg_and_patch_mp(slide, mask_save_dir, patch_size, step_size, seg_params, vis_params, patch_params, patch_level,
+def seg_and_patch_mp(slide, patch_save_dir, mask_save_dir, stitch_save_dir, patch_size, step_size, seg_params, vis_params, patch_params, patch_level,
 					 seg, save_mask, stitch, patch, auto_skip):
 	idx, slide_path = slide
 	slide_id = Path(slide_path).stem
@@ -102,7 +102,11 @@ def seg_and_patch_mp(slide, mask_save_dir, patch_size, step_size, seg_params, vi
 
 	seg_time_elapsed = -1
 	if seg:
-		wsi_object, seg_time_elapsed = segment(wsi_object, current_seg_params, current_filter_params)
+		try:
+			wsi_object, seg_time_elapsed = segment(wsi_object, current_seg_params, current_filter_params)
+		except Exception:
+			print(f"Failed: {slide_id}")
+			return idx, "failed_seg", -1, -1
 
 	if save_mask:
 		mask = wsi_object.visWSI(**current_vis_params)
@@ -154,9 +158,10 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 	slides = [(index, os.path.join(source, row["slide_id"])) for index, row in process_stack.iterrows()]
 
 
-	seg_mp = partial(seg_and_patch_mp, mask_save_dir=mask_save_dir, patch_size=patch_size, step_size=step_size,
-					 seg_params=seg_params, vis_params=vis_params, patch_params=patch_params, patch_level=patch_level,
-					 seg=seg, save_mask=save_mask, stitch=stitch, patch=patch, auto_skip=auto_skip,)
+	seg_mp = partial(seg_and_patch_mp, patch_save_dir=patch_save_dir, mask_save_dir=mask_save_dir,
+					 stitch_save_dir=stitch_save_dir, patch_size=patch_size, step_size=step_size, seg_params=seg_params,
+					 vis_params=vis_params, patch_params=patch_params, patch_level=patch_level, seg=seg,
+					 save_mask=save_mask, stitch=stitch, patch=patch, auto_skip=auto_skip,)
 
 	start = time.time()
 
